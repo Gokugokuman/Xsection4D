@@ -3,7 +3,7 @@
 
 #pragma rtGlobals=1		// Use modern global access method.
 #include <WindowBrowser>
-//#include ":XS_fileloader_Shoya"
+#include ":XS_fileloader_4D"
 //#include ":PSK_trFIT"
 
 
@@ -209,9 +209,9 @@ Function XSection(prefix): Graph
 	CheckBox DuplicateGraphCheck,variable= DuplicateGraph, fsize=9
 	Button RainbowButton,pos={749,9},size={50,20},proc=RainbowProc,title="Rainbow"
 	Button RainbowButton,fSize=10
-	SetVariable XCutDisplay,pos={61,11},size={48,15},bodyWidth=42,proc=CutXChangeProc,title="K:"
+	SetVariable XCutDisplay,pos={61,11},size={48,15},bodyWidth=35,proc=CutXChangeProc,title="K:"
 	SetVariable XCutDisplay,value= CutX
-	SetVariable EnergyCut,pos={61,33},size={48,15},bodyWidth=42,proc=ChangeEnergyCutProc,title="E:"
+	SetVariable EnergyCut,pos={61,33},size={48,15},bodyWidth=35,proc=ChangeEnergyCutProc,title="E:"
 	SetVariable EnergyCut,value= CutY
 	
 	
@@ -224,11 +224,11 @@ Function XSection(prefix): Graph
 	SetVariable IntDelay,pos={527,33},size={57,15},bodyWidth=35,proc=SetIntDelay,title="IntD"
 	SetVariable IntDelay,limits={0,147,1},value= intZ
 	
-	SetVariable InDeg2,pos={112,11},size={58,15},title=" "
+	SetVariable InDeg2,pos={105,11},size={65,15},title=" "
 	SetVariable InDeg2,format="= %.2f deg",frame=0
 	SetVariable InDeg2,limits={-inf,inf,0},value= CutX_val,noedit= 1
 	
-	SetVariable IneV,pos={112,33},size={58,15},title=" "
+	SetVariable IneV,pos={105,33},size={65,15},title=" "
 	SetVariable IneV,format="= %.3f eV",frame=0
 	SetVariable IneV,limits={-inf,inf,0},value= CutY_val,noedit= 1
 	
@@ -373,8 +373,11 @@ Function InitXSection(sym_path,prefix,numDelays)
 	
 	print("InitXSection(" + sym_path + "," + prefix + "," + num2str(numDelays)+")")
 	
+	if(!Datafolderexists("root:XS_Globals"))
+		newdatafolder root:XS_Globals
+	endif
 	Nvar/Z NoOfScans = root:XS_Globals:NoOfScansToBeCombined
-	
+
 	if(!NVAR_exists(NoOfScans))
 		Variable/G root:XS_Globals:NoOfScansToBeCombined
 		Nvar NoOfScans = root:XS_Globals:NoOfScansToBeCombined
@@ -1297,6 +1300,36 @@ Function ButtonProc_showSubPanel(ba) : ButtonControl
 	return 0
 End
 
+Function ButtonProc_LoadDataSetting(ba) : ButtonControl
+	STRUCT WMButtonAction &ba
+
+	switch( ba.eventCode )
+		case 2: // mouse up
+			// click code here
+			XS_LoadSetting()
+			
+			break
+		case -1: // control being killed
+			break
+	endswitch
+
+	return 0
+End
+
+function XS_LoadSetting() : Panel
+	PauseUpdate; Silent 1		// building window...
+	NewPanel/K=1/W=(296,426,497,530) as "Load Setting"
+	SetDrawLayer UserBack
+	SetDrawEnv fsize= 10
+	DrawText 13,22,"LoadData Setting"
+	SetDrawEnv linefgc= (52428,52428,52428),fillfgc= (56797,56797,56797),fillbgc= (56797,56797,56797)
+	DrawRRect 11,24,188,92
+	SetDrawEnv fsize= 10
+	DrawText 24,85,"Each x scan will be added \rtogether when you load data.\rPut inf if you want to add them all. "
+	SetVariable SetNumberOfScansToBeCombined,pos={22.00,30.00},size={150.00,16.00},title="NoOfScansCombined x:"
+	SetVariable SetNumberOfScansToBeCombined,fSize=10
+	SetVariable SetNumberOfScansToBeCombined,limits={1,inf,0},value= root:XS_Globals:NoOfScansToBeCombined
+EndMacro
 
 ////added by Shoya up to here
 
@@ -2298,6 +2331,9 @@ Function XS_Browser_update_button_proc(ba) : ButtonControl
 	return 0
 End
 
+
+
+
 Window XS_browser_panel() : Panel
 	DoWindow/K XSBrowser
 	
@@ -2325,6 +2361,9 @@ Window XS_browser_panel() : Panel
 
 	Button XS_browser_copysettings_button,pos={192,290},size={68,23},proc=XS_browser_copysettings_button,title="Copy config",fSize=10
 	Button XS_browser_pastesettings_button,pos={192,318},size={68,23},proc=XS_browser_pastesettings_button,title="Paste config",fSize=10
+	
+	Button loadSetting,pos={114.00,3.00},size={68.00,23.00},proc=ButtonProc_LoadDataSetting,title="Load Setting"
+	Button loadSetting,fSize=10
 	
 EndMacro
 
