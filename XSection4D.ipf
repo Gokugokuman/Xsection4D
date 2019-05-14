@@ -35,9 +35,9 @@ Window AboutXS() : Panel
 	SetDrawEnv xcoord= rel,ycoord= abs,textxjust= 1,textyjust= 1
 	DrawText 0.5,49,"v1.0"
 	SetDrawEnv xcoord= rel,ycoord= abs,textxjust= 1,textyjust= 1
-	DrawText 0.5,77,"General Support: sobota@stanford.edu"
+	DrawText 0.5,77,"General Support: Jonathan Sobota"
 	SetDrawEnv xcoord= rel,ycoord= abs,textxjust= 1,textyjust= 1
-	DrawText 0.5,98,"4D Features Support: shoya@stanford.edu"
+	DrawText 0.5,98,"4D Features Support: Shoya Sakamoto"
 EndMacro
 
 Function XSection(prefix): Graph	
