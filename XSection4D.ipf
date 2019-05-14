@@ -31,11 +31,13 @@ Window AboutXS() : Panel
 	ModifyPanel/W=AboutXS fixedSize=1
 	SetDrawLayer UserBack
 	SetDrawEnv xcoord= rel,ycoord= abs,fsize= 20,fstyle= 4,textxjust= 1,textyjust= 1
-	DrawText 0.5,15.865,"XSection"
+	DrawText 0.5,25.865,"XSection4D"
 	SetDrawEnv xcoord= rel,ycoord= abs,textxjust= 1,textyjust= 1
-	DrawText 0.5,42,"v3.0"
+	DrawText 0.5,49,"v1.0"
 	SetDrawEnv xcoord= rel,ycoord= abs,textxjust= 1,textyjust= 1
-	DrawText 0.5,95,"Support: sobota@stanford.edu"
+	DrawText 0.5,77,"General Support: sobota@stanford.edu"
+	SetDrawEnv xcoord= rel,ycoord= abs,textxjust= 1,textyjust= 1
+	DrawText 0.5,98,"4D Features Support: shoya@stanford.edu"
 EndMacro
 
 Function XSection(prefix): Graph	
@@ -102,8 +104,9 @@ Function XSection(prefix): Graph
 	//GrR = cos(GrR_Y)
 
 	////////////////////////////////////////////
-		
-	DoWindow/K $("Win"+prefix)	
+	
+	string windowName = "Win"+prefix
+	DoWindow/K $windowName
 	
 	
 	Display /k=1/W=(350,150,1160,650)/N=$("Win"+prefix) HairY0 vs HairX0 as ("XSection of "+prefix)
@@ -111,8 +114,8 @@ Function XSection(prefix): Graph
 	
 	SetWindow kwTopWin, userdata=prefix
 	
-	DoWindow/C $("Win"+prefix)
-	DoWindow/F $("Win"+prefix)
+	DoWindow/C $windowName
+	DoWindow/F $windowName
 	
 	ModifyGraph noLabel(left)=2
 	ModifyGraph noLabel(bottom)=2
@@ -180,7 +183,7 @@ Function XSection(prefix): Graph
 	SetWindow $("Win"+prefix) hook(hookFcn)=imgHookFcn, hookevents=2
 	
 	ControlBar 60
-	SetWindow kwTopWin,hook(hookFcn)=imgHookFcn
+	SetWindow $windowName,hook(hookFcn)=imgHookFcn
 	NewPanel/W=(0.2,0.2,0.8,0)/FG=(FL,FT,GR,)/HOST=# 
 	SetDrawLayer UserBack
 	DrawText 651,50,"Fit:"
@@ -267,7 +270,9 @@ Function XSection(prefix): Graph
 	SetActiveSubwindow ##
 	
 	//some addional functions which appear in the sub panel at the right hand side of the window
-	NewPanel/HOST=$("Win"+prefix)/EXT=0/K=2/W=(0,0,100,400)/N=$("Sub"+prefix)/NA=0
+	string panelName = "Sub"+prefix
+	NewPanel/HOST=$windowName/EXT=0/K=2/W=(0,0,100,400)/N=$panelName/NA=0
+	//DoWindow/C $panelName
 	SetDrawLayer UserBack
 	SetDrawEnv fillfgc= (43690,43690,43690),fillbgc= (43690,43690,43690)
 	DrawRect 3,5,96,247
@@ -278,7 +283,7 @@ Function XSection(prefix): Graph
 	DrawText 10,300,"* mark dead pixel(s) \r  with int window"
 	
 	ListBox listColorTable,pos={5.00,10.00},size={88.00,61.00},fSize=9
-	ListBox listColorTable,listWave=root:color_table:colorTable_list,row= 45,mode= 1
+	ListBox listColorTable,listWave=root:XS_Globals:colorTable_list,row= 45,mode= 1
 	ListBox listColorTable,selRow= colorIndex,proc=ListBoxProc_ColorTable
 	Slider sliderFirstColor,pos={6.00,81.00},size={53.00,154.00},fSize=8
 	Slider sliderFirstColor,limits={-2,2,0.1},variable= FirstColor,proc=SliderProc_ColorXS
@@ -290,11 +295,10 @@ Function XSection(prefix): Graph
 	SetDrawEnv fsize= 9
 	DrawText 53,248,"Last Color"
 	
-	SetWindow $("Sub"+prefix) userData=prefix
-	setWindow $("Sub"+prefix) hook(subPanelHookFCN)=subPanelHookFCN
-	SetWindow $("Sub"+prefix) hide=subPanelHidden
+	SetWindow $windowName#$panelName userData=prefix,hook(subPanelHookFCN)=subPanelHookFCN, hide=subPanelHidden
+	///setWindow $("Sub"+prefix) 
+	//SetWindow $("Sub"+prefix)
 	
-	SetActiveSubwindow ##
 	
 	ResumeUpdate	
 	DoUpdate
@@ -376,6 +380,12 @@ Function InitXSection(sym_path,prefix,numDelays)
 	if(!Datafolderexists("root:XS_Globals"))
 		newdatafolder root:XS_Globals
 	endif
+	
+	string clist=ctablist()
+	make/T/O/N=(itemsinlist(clist, ";")) root:XS_Globals:colorTable_list
+	wave/T cw = root:XS_Globals:colorTable_list
+	cw[] = stringfromlist(p, clist)
+	
 	Nvar/Z NoOfScans = root:XS_Globals:NoOfScansToBeCombined
 
 	if(!NVAR_exists(NoOfScans))
@@ -510,7 +520,6 @@ Function InitXSection(sym_path,prefix,numDelays)
 	
 	Return 0
 End
-
 
 
 
@@ -1291,7 +1300,7 @@ Function ButtonProc_showSubPanel(ba) : ButtonControl
 		case 2: // mouse up
 			// click code here
 			subPanelHidden = subPanelHidden == 0 ? 1 : 0
-			SetWindow $("Sub"+gprefix) hide=subPanelHidden
+			SetWindow $("Win"+gprefix)#$("Sub"+gprefix) hide=subPanelHidden
 			break
 		case -1: // control being killed
 			break
