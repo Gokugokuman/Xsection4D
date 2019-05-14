@@ -377,11 +377,11 @@ Function InitXSection(sym_path,prefix,numDelays)
 	
 	if(!NVAR_exists(NoOfScans))
 		Variable/G root:XS_Globals:NoOfScansToBeCombined
-		NoOfScans = 1
+		Nvar NoOfScans = root:XS_Globals:NoOfScansToBeCombined
 		
 		//input Dialog for setting IntScanWindow
 		variable a = 1
-		prompt a, "Every x scans will be combined. if x is negative all the scans will be added:"
+		prompt a, "Every x scans will be combined. Say inf if you want to add all the scans:"
 		Doprompt "Enter parameter", a
 		
 		if (V_Flag)
@@ -440,7 +440,7 @@ Function InitXSection(sym_path,prefix,numDelays)
 	variable/G IntScan = 0 
 	variable/G CombinedScanNo = 0
 	
-	variable/G collapsed = 0
+	variable/G collapsed = 1
 	variable/G scanAsDelay = 0
 	
 	String/G gprefix = prefix
@@ -487,7 +487,10 @@ Function InitXSection(sym_path,prefix,numDelays)
 	
 	Make/O/N=(VolDims[0],VolDims[1],VolDims[2])  VolData
 	
-	Make/O/N=(VolDims[0],VolDims[1],VolDims[2], VolDims[3]) VolData4D
+	if(numtype(NoOfScans) == 0)
+		Make/O/N=(VolDims[0],VolDims[1],VolDims[2], VolDims[3]) VolData4D
+		collapsed = 0
+	endif
 	
 	Make/N=(numDelays+1) DelayAxis
 	Make/N=(VolDims[0]+1) AngleAxis
@@ -594,40 +597,47 @@ Function UpdateXSData(prefix)
 		WaveStats/Q LoadedData
 		countrate[numLoaded] = V_npnts*V_avg
 		
-		//VolData[][][DelayNo] = N/(N+1) * VolData[p][q][DelayNo] + (1/(N+1)) * LoadedData[p][q]
+		VolData[][][DelayNo] = N/(N+1) * VolData[p][q][DelayNo] + (1/(N+1)) * LoadedData[p][q]
 		//VolData[][][DelayNo] = VolData[p][q][DelayNo] + LoadedData[p][q]
 		
-		
 		if(delayNo == 0)
-		
-			Print "Starting to load scan #" + num2str(ScanNo)
-		
-			if(mod(scanNo, NoOfScansToBeCombined) == 0) // integrate every NoOfScansToBeCombined scan
-				//print("ScanNo = " + Num2str(scanNo) +", CombinedScanNo = " + Num2str(CombinedScanNo) + ", NoOfScansToBeCombined = " + Num2str(NoOfScansToBeCombined))
-				combinedScanNo += 1
-				redimension/N=(-1,-1,-1,combinedScanNo) VolData4D
-			endif
-	
+		Print "Starting to load scan #" + num2str(ScanNo)
 		endif
-
-		variable count = mod(scanNo, NoOfScansToBeCombined)
-		multithread VolData4D[][][DelayNo][combinedScanNo-1] = (count/(count+1)) * VolData4D[p][q][DelayNo][combinedScanNo-1] + (1/(count+1)) * LoadedData[p][q]//added another dimension of scan number
-		
+			
+		if(waveexists(volData4D))
+			
+			if(delayNo == 0)
+				if(mod(scanNo, NoOfScansToBeCombined) == 0) // integrate every NoOfScansToBeCombined scan
+					//print("ScanNo = " + Num2str(scanNo) +", CombinedScanNo = " + Num2str(CombinedScanNo) + ", NoOfScansToBeCombined = " + Num2str(NoOfScansToBeCombined))
+					combinedScanNo += 1
+					redimension/N=(-1,-1,-1,combinedScanNo) VolData4D
+				endif
+			endif
+				
+			variable count = mod(scanNo, NoOfScansToBeCombined)
+			multithread VolData4D[][][DelayNo][combinedScanNo-1] = (count/(count+1)) * VolData4D[p][q][DelayNo][combinedScanNo-1] + (1/(count+1)) * LoadedData[p][q]//added another dimension of scan number
+			
+		endif			
+	
 		DelayNo = DelayNo+1
 		
+		//print(num2str(DelayNo)+","+num2str(scanNo)+","+num2str(combinedScanNo))
 		If (DelayNo ==VolDims[2])
 			DelayNo = 0
 			ScanNo = ScanNo+1
 		EndIf 
 		
 	While(1)
+	
 	print(combinedScanNo)
 	VolDims[3] = combinedScanNo
 	
+	if(waveexists(volData4D))
+		makeVolDataFromVolData4D(prefix,0) 
+	else
+		UpdateXSWindow(prefix)
+	endif
 	
-	//UpdateXSWindow(prefix)
-	makeVolDataFromVolData4D(prefix,0)
-	 
 End
 
 Function UpdateXSWindow(prefix)
